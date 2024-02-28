@@ -1,0 +1,50 @@
+Language:        Cpp
+BasedOnStyle:    LLVM
+
+UseTab:          Never
+IndentWidth:     4
+TabWidth:        4
+
+BraceWrapping:
+  # Opening braces are on the same line as the function definition/class declaration/control statement.
+  AfterClass:      false
+  AfterControlStatement: false
+  AfterEnum:       false
+  AfterFunction:   false
+  AfterNamespace:  false
+  AfterStruct:     false
+  AfterUnion:      false
+  AfterExternBlock: false
+  BeforeCatch:     false
+  BeforeElse:      false
+  IndentBraces:    false
+
+# Include categories for ordering and grouping include statements.
+IncludeCategories:
+  - Regex:           '^<.*\.h>'
+    Priority:        1
+  - Regex:           '^"(llvm|clang).*\.h"'
+    Priority:        2
+  - Regex:           '^".*\.h"'
+    Priority:        3
+  - Regex:           '.*'
+    Priority:        4
+
+# Control the inclusion of spaces in various places
+SpacesBeforeTrailingComments: 1
+SpaceAfterCStyleCast: true
+SpacesInParentheses: false
+SpacesInCStyleCastParentheses: false
+SpaceBeforeAssignmentOperators: true
+
+# Alignment for consecutive assignments
+AlignConsecutiveAssignments: true
+
+# Alignment for consecutive declarations
+AlignConsecutiveDeclarations: true
+
+# Indentation for the preprocessor directives set to none to keep them at the start of the line
+IndentPPDirectives: None
+
+# Max line length can be inferred to some extent from code, but without explicit examples, a common default is used
+ColumnLimit:     120

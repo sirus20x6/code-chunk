@@ -1,0 +1,8 @@
+/code/git/code-chunk/CMakeFiles/intrinsics_gen.dir
+/code/git/code-chunk/CMakeFiles/omp_gen.dir
+/code/git/code-chunk/CMakeFiles/acc_gen.dir
+/code/git/code-chunk/CMakeFiles/RISCVTargetParserTableGen.dir
+/code/git/code-chunk/CMakeFiles/clang-tablegen-targets.dir
+/code/git/code-chunk/CMakeFiles/FunctionParser.dir
+/code/git/code-chunk/CMakeFiles/edit_cache.dir
+/code/git/code-chunk/CMakeFiles/rebuild_cache.dir
