@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(FunctionParser)
+project(code_chunk)
 
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -55,18 +55,18 @@ set(CMAKE_CXX_CLANG_TIDY
 
 # Add the executable
 # Update the source file paths to reflect their new location in the src directory
-add_executable(FunctionParser 
+add_executable(code_chunk 
     src/main.cpp 
     src/ModelLoader.cpp 
     src/FunctionExtractor.cpp 
     src/FileUtil.cpp
 )
 
-target_include_directories(FunctionParser PRIVATE
+target_include_directories(code_chunk PRIVATE
     ${CMAKE_SOURCE_DIR}/src
 )
 
-target_include_directories(FunctionParser SYSTEM PRIVATE
+target_include_directories(code_chunk SYSTEM PRIVATE
     ./llama.cpp
     ./llama.cpp/common/
 )
@@ -77,7 +77,7 @@ set(LIBGGML_STATIC_LIB_PATH "${CMAKE_SOURCE_DIR}/llama.cpp/build/libggml_static.
 set(LIBLLAMA_LIB_PATH "${CMAKE_SOURCE_DIR}/llama.cpp/build/libllama.a")
 
 # Link against LLVM and Clang libraries
-target_link_libraries(FunctionParser
+target_link_libraries(code_chunk
     PRIVATE
     clang-cpp
     LLVM
@@ -88,3 +88,9 @@ target_link_libraries(FunctionParser
     ${LIBLLAMA_LIB_PATH}
     ${CMAKE_THREAD_LIBS_INIT}
 )
+
+add_custom_command(TARGET code_chunk POST_BUILD
+                   COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+                   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                   COMMENT "Generating API documentation with Doxygen"
+                   VERBATIM)
