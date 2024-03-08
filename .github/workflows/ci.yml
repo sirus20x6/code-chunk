@@ -7,6 +7,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
+        path: 'main-repo' # Optional: Specify a path to checkout the main repository
+    
+    - uses: actions/checkout@v2
+      with:
         repository: 'owner/llama.cpp' # Replace 'owner/llama.cpp' with the correct repository path
         path: 'main-repo/llama.cpp' # Adjust the path to match your project structure
 
