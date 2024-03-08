@@ -24,18 +24,28 @@ add_definitions(${LLVM_DEFINITIONS})
 # Enable Clang-Tidy checks
 set(CLANG_TIDY_CHECKS "-*,clang-analyzer-*,cppcoreguidelines-*,bugprone-*,performance-*")
 
-# Optionally, include other checks or modify the checks as needed.
+# # Optionally, include other checks or modify the checks as needed.
+# # Adjust the header-filter to only include files from the src directory
 set(CMAKE_CXX_CLANG_TIDY 
     clang-tidy;
     -checks=${CLANG_TIDY_CHECKS};
-    -header-filter=.;
+    -header-filter=${CMAKE_SOURCE_DIR}/src/.*;
 )
 
 # Add the executable
-add_executable(FunctionParser main.cpp ModelLoader.cpp FunctionExtractor.cpp FileUtil.cpp)
+# Update the source file paths to reflect their new location in the src directory
+add_executable(FunctionParser 
+    src/main.cpp 
+    src/ModelLoader.cpp 
+    src/FunctionExtractor.cpp 
+    src/FileUtil.cpp
+)
 
-# Include directories for header files
 target_include_directories(FunctionParser PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+)
+
+target_include_directories(FunctionParser SYSTEM PRIVATE
     ./llama.cpp
     ./llama.cpp/common/
 )
@@ -55,9 +65,5 @@ target_link_libraries(FunctionParser
     ${COMMON_LIB_PATH}
     ${LIBGGML_STATIC_LIB_PATH}
     ${LIBLLAMA_LIB_PATH}
-    llama
     ${CMAKE_THREAD_LIBS_INIT}
 )
-
-# Note: The -header-filter=.; option tells clang-tidy to only apply checks to the headers in the current directory.
-# Adjust this according to your project's layout and requirements.

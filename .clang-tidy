@@ -1,0 +1,12 @@
+Checks: '*, -llvm-header-guard'
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+FormatStyle: file
+CheckOptions:
+  - key:             google-readability-todo
+    value:           '0'
+  - key:             modernize-use-trailing-return-type
+    value:           '0'
+  - key:             readability-magic-numbers
+    value:           '0'
+...

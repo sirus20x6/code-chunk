@@ -1,5 +1,6 @@
 #include "FunctionExtractor.h"
 #include "ModelLoader.h"
+#include "../llama.cpp/common/common.h"
 
 void extractAndTokenizeFunctionText(CXCursor cursor, const CXSourceRange& range, const std::vector<std::string>& sourceLines, llama_model* model, std::vector<FunctionInfo>& functionsInfo){
     CXSourceLocation startLoc = clang_getRangeStart(range);
@@ -13,7 +14,7 @@ void extractAndTokenizeFunctionText(CXCursor cursor, const CXSourceRange& range,
         functionText += (i == startLine ? sourceLines[i - 1].substr(startColumn - 1) : sourceLines[i - 1]) + "\n";
     }
 
-    int tokenCount = tokenize_and_count(model, functionText);
+    int tokenCount = tokenize(model, functionText).size();
     CXString cursorSpelling = clang_getCursorSpelling(cursor);
     std::string functionSignature = clang_getCString(cursorSpelling);
     functionsInfo.push_back({functionSignature, static_cast<int>(startLine), static_cast<int>(endLine), tokenCount});

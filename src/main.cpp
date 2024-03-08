@@ -2,8 +2,8 @@
 #include <clang-c/Index.h>
 #include <iostream>
 #include <fstream>
-#include "llama.cpp/common/common.h"
-#include "llama.cpp/llama.h"
+#include "../llama.cpp/common/common.h"
+#include "../llama.cpp/llama.h"
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -11,18 +11,30 @@
 #include <algorithm>
 #include "ModelLoader.h"
 #include "FileUtils.h"
-#include "FunctionalInfo.h"
 #include "FunctionExtractor.h"
 
+
 int main(int argc, char** argv) {
-    if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << " <model_path> <filename>\n";
+    // Adjusting the argument count check to expect one more argument
+    if (argc < 4) {
+        std::cerr << "Usage: " << argv[0] << " <model_path> <model_type> <filename>\n";
         return 1;
     }
+
+    // Additional setup or configuration based on the model_type could be done here
+    const std::string modelPath = argv[1];
+    const std::string modelType = argv[2]; // New: Use the model type argument
+    const std::string filename = argv[3];
 
     llama_model* model = load_model(argv[1]);
     if (!model) {
         std::cerr << "Failed to load model." << std::endl;
+        return 1;
+    }
+
+    llama_model* embeddingModel = load_model(argv[2]);
+    if (!embeddingModel) {
+        std::cerr << "Failed to load embedding model." << std::endl;
         return 1;
     }
 
@@ -124,6 +136,9 @@ int main(int argc, char** argv) {
             std::cout << "  - " << func.signature << " (" << func.tokenCount << " tokens)" << std::endl;
         }
     }
+
+    llama_free_model(model); // Free the main model
+    llama_free_model(embeddingModel); // Free the embedding model
 
     return 0;
 }

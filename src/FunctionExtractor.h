@@ -3,6 +3,7 @@
 #include <clang-c/Index.h>
 #include <vector>
 #include <string>
+#include "../llama.cpp/common/common.h"
 
 void extractAndTokenizeFunctionText(CXCursor cursor, const CXSourceRange& range, const std::vector<std::string>& sourceLines, llama_model* model, std::vector<FunctionInfo>& functionsInfo);
 CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client_data);

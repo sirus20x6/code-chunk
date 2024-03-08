@@ -38,10 +38,10 @@ SpacesInCStyleCastParentheses: false
 SpaceBeforeAssignmentOperators: true
 
 # Alignment for consecutive assignments
-AlignConsecutiveAssignments: true
+AlignConsecutiveAssignments: false
 
 # Alignment for consecutive declarations
-AlignConsecutiveDeclarations: true
+AlignConsecutiveDeclarations: false
 
 # Indentation for the preprocessor directives set to none to keep them at the start of the line
 IndentPPDirectives: None
