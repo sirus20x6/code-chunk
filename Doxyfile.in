@@ -1,0 +1,4 @@
+# Doxyfile.in
+PROJECT_NAME           = "@PROJECT_NAME@"
+OUTPUT_DIRECTORY       = @CMAKE_PROJECT_DIR@/docs
+# Other configurations...
