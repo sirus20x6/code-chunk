@@ -33,20 +33,17 @@ message("Doxygen build started")
 # Optional: Add a custom target to run Doxygen when you build the project
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
-    add_custom_target( doc_doxygen ALL
+    add_custom_target(doc_doxygen ALL
         COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Generating API documentation with Doxygen"
-        VERBATIM )
-else (DOXYGEN_FOUND)
-  message("Doxygen need to be installed to generate the doxygen documentation")
-endif (DOXYGEN_FOUND)
+        VERBATIM)
+else()
+    message("Doxygen need to be installed to generate the doxygen documentation")
+endif()
 
 # Enable Clang-Tidy checks
 set(CLANG_TIDY_CHECKS "-*,clang-analyzer-*,cppcoreguidelines-*,bugprone-*,performance-*")
-
-# # Optionally, include other checks or modify the checks as needed.
-# # Adjust the header-filter to only include files from the src directory
 set(CMAKE_CXX_CLANG_TIDY 
     clang-tidy;
     -checks=${CLANG_TIDY_CHECKS};
@@ -54,7 +51,6 @@ set(CMAKE_CXX_CLANG_TIDY
 )
 
 # Add the executable
-# Update the source file paths to reflect their new location in the src directory
 add_executable(code_chunk 
     src/main.cpp 
     src/ModelLoader.cpp 
@@ -71,12 +67,20 @@ target_include_directories(code_chunk SYSTEM PRIVATE
     ./llama.cpp/common/
 )
 
-# Specify the full path to the common library
+# Build llama libraries before the main application
+add_custom_target(build_llama_libs
+    COMMAND cmake -S ${CMAKE_SOURCE_DIR}/llama.cpp -B ${CMAKE_SOURCE_DIR}/llama.cpp/build
+    COMMAND make -j24 -C ${CMAKE_SOURCE_DIR}/llama.cpp/build
+)
+
+add_dependencies(code_chunk build_llama_libs)
+
+# Specify the full path to the libraries
 set(COMMON_LIB_PATH "${CMAKE_SOURCE_DIR}/llama.cpp/build/common/libcommon.a")
 set(LIBGGML_STATIC_LIB_PATH "${CMAKE_SOURCE_DIR}/llama.cpp/build/libggml_static.a")
 set(LIBLLAMA_LIB_PATH "${CMAKE_SOURCE_DIR}/llama.cpp/build/libllama.a")
 
-# Link against LLVM and Clang libraries
+# Link against LLVM, Clang libraries, and the built libraries
 target_link_libraries(code_chunk
     PRIVATE
     clang-cpp
