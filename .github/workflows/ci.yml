@@ -6,6 +6,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        repository: 'owner/llama.cpp' # Replace 'owner/llama.cpp' with the correct repository path
+        path: 'main-repo/llama.cpp' # Adjust the path to match your project structure
 
     - name: Install LLVM and Clang
       uses: KyleMayes/install-llvm-action@v1
