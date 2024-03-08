@@ -21,12 +21,16 @@ jobs:
 
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y cmake g++ make
-
+      
     - name: Configure CMake
-      run: cmake -S . -B build
+      run: |
+        cd main-repo
+        cmake -S . -B build
 
     - name: Build
-      run: cmake --build build -- -j4
+      run: |
+        cd main-repo
+        cmake --build build -- -j4
 
     - name: Test
       run: ./build/YourTestExecutable
