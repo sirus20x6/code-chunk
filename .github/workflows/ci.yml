@@ -1,5 +1,3 @@
-name: C++ CI
-
 on: [push, pull_request]
 
 jobs:
@@ -9,6 +7,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Install LLVM and Clang
+      uses: KyleMayes/install-llvm-action@v1
+      with:
+        version: "16.0"
+
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y cmake g++ make
 
@@ -16,7 +19,7 @@ jobs:
       run: cmake -S . -B build
 
     - name: Build
-      run: cmake --build build -- -j2
+      run: cmake --build build -- -j4
 
     - name: Test
       run: ./build/YourTestExecutable
