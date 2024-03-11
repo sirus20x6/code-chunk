@@ -8,11 +8,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         path: 'main-repo' # Optional: Specify a path to checkout the main repository
-    
-    - uses: actions/checkout@v2
-      with:
-        repository: 'ggerganov/llama.cpp'
-        path: 'main-repo/llama.cpp'
 
     - name: Install LLVM and Clang
       uses: KyleMayes/install-llvm-action@v1

@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(code_chunk)
+include(ExternalProject)
 
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -48,6 +49,17 @@ set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
 set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
 set(CMAKE_PROJECT_DIR ${CMAKE_SOURCE_DIR})
 
+ExternalProject_Add(llama_cpp
+    GIT_REPOSITORY https://github.com/ggerganov/llama.cpp.git
+    GIT_TAG master # Or specify a specific tag or branch if needed
+    SOURCE_DIR "${CMAKE_BINARY_DIR}/llama_cpp"
+    BINARY_DIR "${CMAKE_BINARY_DIR}/llama_cpp/build" # This directory will be created automatically
+    CONFIGURE_COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/llama_cpp/build" && "${CMAKE_COMMAND}" -S "${CMAKE_BINARY_DIR}/llama_cpp" -B "${CMAKE_BINARY_DIR}/llama_cpp/build"
+    BUILD_COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}/llama_cpp/build" -- -j24
+    INSTALL_COMMAND "" # No install command, adjust if necessary
+    TEST_COMMAND "" # No test command, adjust if necessary
+)
+
 # Request to configure the file
 configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
 message("Doxygen build started")
@@ -89,13 +101,7 @@ target_include_directories(code_chunk SYSTEM PRIVATE
     ./llama.cpp/common/
 )
 
-# Build llama libraries before the main application
-add_custom_target(build_llama_libs
-    COMMAND cmake -S ${CMAKE_SOURCE_DIR}/llama.cpp -B ${CMAKE_SOURCE_DIR}/llama.cpp/build
-    COMMAND make -j24 -C ${CMAKE_SOURCE_DIR}/llama.cpp/build
-)
-
-add_dependencies(code_chunk build_llama_libs)
+add_dependencies(code_chunk llama_cpp)
 
 # Specify the full path to the libraries
 set(COMMON_LIB_PATH "${CMAKE_SOURCE_DIR}/llama.cpp/build/common/libcommon.a")
