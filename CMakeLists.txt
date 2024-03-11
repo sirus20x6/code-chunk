@@ -4,6 +4,23 @@ project(code_chunk)
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_BUILD_TYPE "Release")
+set(LLVM_ENABLE_PROJECTS "clang")
+# Detect the target architecture
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
+    set(LLVM_TARGETS_TO_BUILD "X86")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|AARCH64)$")
+    set(LLVM_TARGETS_TO_BUILD "AArch64")
+    # Add other architectures as needed
+else()
+    message(FATAL_ERROR "Unsupported target architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+endif()
+set(LLVM_BUILD_LLVM_DYLIB ON)
+set(LLVM_LINK_LLVM_DYLIB ON)
+set(LLVM_ENABLE_RTTI ON)
+set(LLVM_ENABLE_EH ON)
+set(LLVM_ENABLE_FFI ON)
+set(BUILD_SHARED_LIBS ON)
 
 # Find LLVM
 find_package(LLVM 16 REQUIRED CONFIG)
@@ -20,6 +37,11 @@ include_directories(${CLANG_INCLUDE_DIRS})
 
 # Add LLVM and Clang definitions
 add_definitions(${LLVM_DEFINITIONS})
+
+find_library(LIBCLANG_LIBRARY
+    NAMES libclang clang
+    HINTS /opt/local/lib /usr/local/lib /usr/lib
+)
 
 # Configure Doxygen
 set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
@@ -86,7 +108,7 @@ target_link_libraries(code_chunk
     clang-cpp
     LLVM
     LLVMSupport
-    "/usr/lib/libclang.so.16"
+    ${LIBCLANG_LIBRARY}
     ${COMMON_LIB_PATH}
     ${LIBGGML_STATIC_LIB_PATH}
     ${LIBLLAMA_LIB_PATH}
