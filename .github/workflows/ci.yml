@@ -20,7 +20,7 @@ jobs:
     - name: Configure CMake
       run: |
         cd main-repo
-        cmake -S . -B build
+        cmake -S . -B build -DLLVM_DIR=${{ env.LLVM_DIR }}
 
     - name: Build
       run: |
