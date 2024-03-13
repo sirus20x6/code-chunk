@@ -1,5 +1,25 @@
+/**
+ * @file ModelLoader.h
+ * @brief This header file declares functions for loading and tokenizing models.
+ *
+ * The ModelLoader module provides functionality to load a language model from a file and tokenize
+ * input strings using the loaded model. It also includes functions to generate embeddings for
+ * tokenized sequences and to normalize vectors.
+ *
+ * The following functions are declared in this header:
+ * - load_model: Loads a language model from a file.
+ * - tokenize: Tokenizes an input string using the provided model.
+ * - generate_embeddings: Generates embeddings for a sequence of tokens.
+ * - batch_add_seq: Adds a sequence of tokens to a batch.
+ * - batch_decode: Decodes a batch of tokens and generates embeddings.
+ * - normalize: Normalizes a vector and stores the result in another vector.
+ *
+ * These functions are used in the context of a language model and are designed to be used by other
+ * modules in the program.
+ */
+
 #pragma once
-#include "../llama.cpp/llama.h"
+#include "llama.h"
 #include <string>
 #include <vector>
 

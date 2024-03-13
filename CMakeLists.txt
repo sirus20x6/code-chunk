@@ -6,7 +6,7 @@ include(ExternalProject)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_BUILD_TYPE "Release")
-set(LLVM_ENABLE_PROJECTS "clang")
+
 # Detect the target architecture
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
     set(LLVM_TARGETS_TO_BUILD "X86")
@@ -16,15 +16,9 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|AARCH64)$")
 else()
     message(FATAL_ERROR "Unsupported target architecture: ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
-set(LLVM_BUILD_LLVM_DYLIB ON)
-set(LLVM_LINK_LLVM_DYLIB ON)
-set(LLVM_ENABLE_RTTI ON)
-set(LLVM_ENABLE_EH ON)
-set(LLVM_ENABLE_FFI ON)
-set(BUILD_SHARED_LIBS ON)
 
 # Find LLVM
-find_package(LLVM 16 REQUIRED CONFIG)
+find_package(LLVM 17 REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
@@ -39,23 +33,17 @@ include_directories(${CLANG_INCLUDE_DIRS})
 # Add LLVM and Clang definitions
 add_definitions(${LLVM_DEFINITIONS})
 
-find_library(LIBCLANG_LIBRARY
-    NAMES libclang clang
-    HINTS /opt/local/lib /usr/local/lib /usr/lib
-)
-
 # Configure Doxygen
 set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
 set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
 set(CMAKE_PROJECT_DIR ${CMAKE_SOURCE_DIR})
 
+# Configure the llama.cpp project as an external project
 ExternalProject_Add(llama_cpp
     GIT_REPOSITORY https://github.com/ggerganov/llama.cpp.git
     GIT_TAG master # Or specify a specific tag or branch if needed
     SOURCE_DIR "${CMAKE_BINARY_DIR}/llama_cpp"
     BINARY_DIR "${CMAKE_BINARY_DIR}/llama_cpp/build" # This directory will be created automatically
-    CONFIGURE_COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/llama_cpp/build" && "${CMAKE_COMMAND}" -S "${CMAKE_BINARY_DIR}/llama_cpp" -B "${CMAKE_BINARY_DIR}/llama_cpp/build"
-    BUILD_COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}/llama_cpp/build" -- -j24
     INSTALL_COMMAND "" # No install command, adjust if necessary
     TEST_COMMAND "" # No test command, adjust if necessary
 )
@@ -97,16 +85,16 @@ target_include_directories(code_chunk PRIVATE
 )
 
 target_include_directories(code_chunk SYSTEM PRIVATE
-    ./llama.cpp
-    ./llama.cpp/common/
+    ./build/llama_cpp
+    ./build/llama_cpp/common/
 )
 
 add_dependencies(code_chunk llama_cpp)
 
 # Specify the full path to the libraries
-set(COMMON_LIB_PATH "${CMAKE_SOURCE_DIR}/llama.cpp/build/common/libcommon.a")
-set(LIBGGML_STATIC_LIB_PATH "${CMAKE_SOURCE_DIR}/llama.cpp/build/libggml_static.a")
-set(LIBLLAMA_LIB_PATH "${CMAKE_SOURCE_DIR}/llama.cpp/build/libllama.a")
+set(COMMON_LIB_PATH "${CMAKE_SOURCE_DIR}/build/llama_cpp/build/common/libcommon.a")
+set(LIBGGML_STATIC_LIB_PATH "${CMAKE_SOURCE_DIR}/build/llama_cpp/build/libggml_static.a")
+set(LIBLLAMA_LIB_PATH "${CMAKE_SOURCE_DIR}/build/llama_cpp/build/libllama.a")
 
 # Link against LLVM, Clang libraries, and the built libraries
 target_link_libraries(code_chunk
@@ -121,6 +109,7 @@ target_link_libraries(code_chunk
     ${CMAKE_THREAD_LIBS_INIT}
 )
 
+# Add a custom command to run Doxygen after the build
 add_custom_command(TARGET code_chunk POST_BUILD
                    COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

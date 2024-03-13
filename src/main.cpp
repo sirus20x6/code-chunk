@@ -1,9 +1,14 @@
+/**
+ * @file main.cpp
+ * @brief This file contains the main function of the program.
+ */
+
 #include "FunctionalInfo.h"
 #include <clang-c/Index.h>
 #include <iostream>
 #include <fstream>
-#include "../llama.cpp/common/common.h"
-#include "../llama.cpp/llama.h"
+#include "common/common.h"
+#include "llama.h"
 #include <cmath>
 #include <cstdio>
 #include <string>
@@ -13,7 +18,15 @@
 #include "FileUtils.h"
 #include "FunctionExtractor.h"
 
-
+/**
+ * @brief The main function of the program.
+ * @param argc The number of command-line arguments.
+ * @param argv The array of command-line arguments.
+ * @return The exit status of the program.
+ *
+ * This function is the entry point of the program. It processes command-line arguments, loads models,
+ * parses the source files, extracts function information, and performs various operations on the function data.
+ */
 int main(int argc, char** argv) {
     // Adjusting the argument count check to expect one more argument
     if (argc < 4) {
