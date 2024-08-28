@@ -1,34 +1,38 @@
-/**
- * @file FunctionExtractor.h
- * @brief This file contains the declarations of function extractor and visitor related functions.
- */
-
 #pragma once
 #include "FunctionalInfo.h"
 #include <clang-c/Index.h>
 #include <vector>
 #include <string>
+#include "llama.h"
 #include "common/common.h"
 
 /**
- * @brief Extracts and tokenizes the function text using the provided cursor, range, source lines, llama model, and functions information.
- * @param cursor The Clang cursor representing the function.
- * @param range The source range of the function.
- * @param sourceLines The vector of source lines.
- * @param model The llama model.
- * @param functionsInfo The vector of FunctionInfo structures.
+ * @brief Extracts and tokenizes the text of a function.
  *
- * This function is used to extract the function text from the given cursor and range, tokenize it, and store the information in the provided vectors.
+ * This function extracts the text of a function from the source code based on the provided range.
+ * It then tokenizes the function text using the provided model and stores the function information
+ * in the provided vector.
+ *
+ * @param cursor The cursor representing the function.
+ * @param range The source range of the function.
+ * @param sourceLines The vector containing the source code lines.
+ * @param model The llama model used for tokenization.
+ * @param functionsInfo The vector to store the function information.
  */
-void extractAndTokenizeFunctionText(CXCursor cursor, const CXSourceRange& range, const std::vector<std::string>& sourceLines, llama_model* model, std::vector<FunctionInfo>& functionsInfo);
+void extractAndTokenizeFunctionText(CXCursor cursor, const CXSourceRange& range, 
+                                    const std::vector<std::string>& sourceLines, 
+                                    llama_model* model, std::vector<FunctionInfo>& functionsInfo);
 
 /**
- * @brief The visitor function that is called by the Clang library during the traversal of the AST.
- * @param cursor The current cursor.
- * @param parent The parent cursor.
- * @param client_data The client data provided by the caller.
- * @return The result of the visit.
+ * @brief The visitor function called by the Clang AST traversal.
  *
- * This function is used to process each cursor in the AST during the traversal. It can be used to perform various operations on the cursors, such as extracting function information.
+ * This function is called for each cursor in the AST traversal. It checks if the cursor is from the
+ * main file and if it represents a function or method declaration. If so, it extracts and tokenizes
+ * the function text.
+ *
+ * @param cursor The current cursor being visited.
+ * @param parent The parent cursor of the current cursor.
+ * @param client_data Pointer to the client data, which should be a VisitorData pointer.
+ * @return CXChildVisitResult The result of the visit, indicating whether to continue or recurse.
  */
 CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client_data);
