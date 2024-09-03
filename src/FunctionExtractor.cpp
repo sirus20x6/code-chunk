@@ -1,46 +1,28 @@
 #include "FunctionExtractor.h"
-#include "ModelLoader.h"
-#include <stdexcept>
+#include <regex>
 
-void extractAndTokenizeFunctionText(CXCursor cursor, const CXSourceRange& range,
-                                    const std::vector<std::string>& sourceLines,
-                                    llama_model* model, std::vector<FunctionInfo>& functionsInfo) {
-    unsigned startLine = 0, startColumn = 0, endLine = 0, endColumn = 0;
-    CXSourceLocation startLoc = clang_getRangeStart(range);
-    CXSourceLocation endLoc = clang_getRangeEnd(range);
-    clang_getSpellingLocation(startLoc, nullptr, &startLine, &startColumn, nullptr);
-    clang_getSpellingLocation(endLoc, nullptr, &endLine, &endColumn, nullptr);
+namespace FunctionExtractor {
+    std::vector<FunctionInfo> extractFunctions(const std::string& sourceCode) {
+        std::vector<FunctionInfo> functions;
+        std::regex funcRegex(R"(\\b(\\w+)\\s+(\\w+)\\s*\\(([^)]*)\\))"); // Simplified regex for demonstration
+        std::smatch matches;
 
-    std::string functionText;
-    for (unsigned i = startLine; i <= endLine; ++i) {
-        functionText += (i == startLine ? sourceLines[i - 1].substr(startColumn - 1) : sourceLines[i - 1]) + "\n";
-    }
-
-    std::vector<llama_token> tokens = tokenize(model, functionText);
-    int tokenCount = static_cast<int>(tokens.size());
-
-    CXString cursorSpelling = clang_getCursorSpelling(cursor);
-    std::string functionSignature = clang_getCString(cursorSpelling);
-    functionsInfo.push_back({functionSignature, static_cast<int>(startLine), static_cast<int>(endLine), tokenCount});
-
-    clang_disposeString(cursorSpelling);
-}
-
-CXChildVisitResult visitor(CXCursor cursor, CXCursor parent, CXClientData client_data) {
-    VisitorData* data = static_cast<VisitorData*>(client_data);
-    if (clang_Location_isFromMainFile(clang_getCursorLocation(cursor)) == 0)
-        return CXChildVisit_Continue;
-
-    CXSourceRange range = clang_getCursorExtent(cursor);
-    switch (cursor.kind) {
-        case CXCursor_FunctionDecl:
-        case CXCursor_CXXMethod: {
-            extractAndTokenizeFunctionText(cursor, range, *(data->sourceLines), data->model, *(data->functionsInfo));
-            break;
+        std::string::const_iterator searchStart(sourceCode.cbegin());
+        while (std::regex_search(searchStart, sourceCode.cend(), matches, funcRegex)) {
+            FunctionInfo fi;
+            fi.name = matches[2];
+            fi.type = matches[1];
+            // Process parameters if needed
+            functions.push_back(fi);
+            searchStart = matches.suffix().first;
         }
-        default:
-            break;
+
+        return functions;
     }
 
-    return CXChildVisit_Recurse;
+    void processFunctionData(const std::vector<FunctionInfo>& functions) {
+        for (const auto& func : functions) {
+            std::cout << "Function: " << func.name << " Type: " << func.type << '\n';
+        }
+    }
 }

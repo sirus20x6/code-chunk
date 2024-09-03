@@ -1,32 +1,32 @@
-#ifndef CMAKE_PARSER_H
-#define CMAKE_PARSER_H
+#pragma once
 
 #include <string>
 #include <vector>
-#include <map>
+#include <memory>
+#include <nlohmann/json.hpp>
+
+struct CompilerCommand {
+    std::string directory;
+    std::string command;
+    std::string file;
+
+    std::vector<std::string> getFlags() const;
+};
 
 class CMakeParser {
 public:
-    CMakeParser(const std::string& cmakeListsPath);
+    CMakeParser();
+    ~CMakeParser();
 
-    bool parse();
-
-    const std::vector<std::string>& getIncludeDirectories() const;
-    const std::vector<std::string>& getCompilerFlags() const;
-    const std::vector<std::string>& getSourceFiles() const;
-    const std::string& getTargetName() const;
-    const std::map<std::string, std::string>& getDefinitions() const;
+    bool parse(const std::string& sourcePath);
+    std::vector<std::string> getTargets() const;
+    std::vector<std::string> getIncludeDirectories(const std::string& targetName) const;
+    std::vector<std::string> getCompileDefinitions(const std::string& targetName) const;
+    std::vector<std::string> getLinkedLibraries(const std::string& targetName) const;
+    std::vector<CompilerCommand> getCompilerCommands() const;
+    std::string getLastError() const;
 
 private:
-    void parseLine(const std::string& line);
-    void parseList(const std::string& input, std::vector<std::string>& output);
-
-    std::string m_cmakeListsPath;
-    std::vector<std::string> m_includeDirectories;
-    std::vector<std::string> m_compilerFlags;
-    std::vector<std::string> m_sourceFiles;
-    std::string m_targetName;
-    std::map<std::string, std::string> m_definitions;
+    class Impl;
+    std::unique_ptr<Impl> pImpl;
 };
-
-#endif // CMAKE_PARSER_H

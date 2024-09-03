@@ -1,0 +1,1 @@
+/usr/bin/c++  -Wall -Wextra CMakeFiles/TestExecutable.dir/test.cpp.o -o TestExecutable

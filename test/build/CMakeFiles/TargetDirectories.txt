@@ -1,0 +1,7 @@
+/code/git/code-chunk/test/build/CMakeFiles/TestExecutable.dir
+/code/git/code-chunk/test/build/CMakeFiles/edit_cache.dir
+/code/git/code-chunk/test/build/CMakeFiles/rebuild_cache.dir
+/code/git/code-chunk/test/build/CMakeFiles/list_install_components.dir
+/code/git/code-chunk/test/build/CMakeFiles/install.dir
+/code/git/code-chunk/test/build/CMakeFiles/install/local.dir
+/code/git/code-chunk/test/build/CMakeFiles/install/strip.dir

@@ -1,20 +1,17 @@
 #pragma once
+
 #include <string>
 #include <vector>
-#include "llama.h"
 
+// Update the FunctionInfo struct in FunctionalInfo.h
 struct FunctionInfo {
-    std::string signature;
-    int startLine;
-    int endLine;
-    int tokenCount;
-};
-
-/**
- * @brief Structure to hold data used by the visitor during the parsing process.
- */
-struct VisitorData {
-    llama_model* model;
-    const std::vector<std::string>* sourceLines;
-    std::vector<FunctionInfo>* functionsInfo;
+    std::string name;
+    std::string type;
+    std::vector<std::string> parameters;
+    unsigned int startLine;
+    unsigned int endLine;
+    unsigned int tokenCount;
+    std::string filePath;
+    std::string llvmIR;    // New field to store LLVM IR
+    std::string assembly;  // New field to store assembly code
 };

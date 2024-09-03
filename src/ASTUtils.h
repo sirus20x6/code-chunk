@@ -1,13 +1,23 @@
+// ASTUtils.h
 #pragma once
 
+#include "FunctionalInfo.h"
+#include <string>
+#include <vector>
 #include <clang-c/Index.h>
-#include <iostream>
 
-// Functions for working with AST (Abstract Syntax Tree)
-namespace ASTUtils {
-    // Print the AST recursively starting from a given cursor
-    void printAST(CXCursor cursor, int depth = 0);
+class ASTParser {
+public:
+    ASTParser();
+    ~ASTParser();
 
-    // Visit children of a given cursor
-    CXChildVisitResult visitASTChildren(CXCursor cursor, CXCursorVisitor visitor, CXClientData clientData);
+    CXErrorCode parseFile(const std::string& filePath, const std::vector<const char*>& compilerFlags, std::vector<FunctionInfo>& functionsInfo);
+
+private:
+    static CXChildVisitResult visitorCallback(CXCursor cursor, CXCursor parent, CXClientData clientData);
+    void extractFunctionInfo(CXCursor cursor, FunctionInfo& functionInfo);
+    std::pair<std::string, unsigned> extractFunctionText(const std::vector<std::string>& lines, unsigned startLine);
+    std::string m_currentFile;
+
+    CXIndex m_index;
 };

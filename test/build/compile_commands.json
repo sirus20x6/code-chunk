@@ -1,0 +1,8 @@
+[
+{
+  "directory": "/code/git/code-chunk/test/build",
+  "command": "/usr/bin/c++  -I/code/git/code-chunk/test/include  -Wall -Wextra -std=gnu++17 -o CMakeFiles/TestExecutable.dir/test.cpp.o -c /code/git/code-chunk/test/test.cpp",
+  "file": "/code/git/code-chunk/test/test.cpp",
+  "output": "CMakeFiles/TestExecutable.dir/test.cpp.o"
+}
+]
