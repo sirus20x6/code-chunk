@@ -1,3 +1,3 @@
-/build
-/.vscode
-/test/build
+build
+.vscode
+test/build
