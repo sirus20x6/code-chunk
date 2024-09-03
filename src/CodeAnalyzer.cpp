@@ -1,5 +1,6 @@
 #include "CodeAnalyzer.h"
 #include "FileUtils.h"
+#include "LogUtils.h"
 #include <iostream>
 #include <numeric>
 #include <cmath>
@@ -22,8 +23,6 @@
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/raw_ostream.h>
 #include <fstream>
-
-#define DEBUG_PRINT(x) do { std::cout << "DEBUG: " << x << '\n'; } while (0)
 
 CodeAnalyzer::CodeAnalyzer(const std::string& modelPath, const std::string& embeddingModelPath, const std::string& sourcePath)
     : m_sourcePath(sourcePath), m_model(nullptr), m_embeddingModel(nullptr), m_ctx(nullptr) {
@@ -58,7 +57,7 @@ void CodeAnalyzer::run() {
 }
 
 void CodeAnalyzer::parseProject() {
-    DEBUG_PRINT("Parsing CMake project");
+    LogUtils::Logger::info("Parsing CMake project");
     if (!m_cmakeParser->parse(m_sourcePath)) {
         throw std::runtime_error("Failed to parse CMake project: " + m_cmakeParser->getLastError());
     }
@@ -69,9 +68,9 @@ void CodeAnalyzer::parseProject() {
 }
 
 void CodeAnalyzer::processFunctions() {
-    DEBUG_PRINT("Processing source files");
+    LogUtils::Logger::info("Processing source files");
     for (const auto& cmd : m_compilerCommands) {
-        DEBUG_PRINT("Processing file: " << cmd.file);
+        LogUtils::Logger::debug("Processing file: ", cmd.file);
 
         std::vector<std::string> compilerFlags = filterCompilerFlags(cmd.getFlags(), cmd.file);
         
@@ -99,14 +98,14 @@ void CodeAnalyzer::processFunctions() {
             cFlags.push_back(flag.c_str());
         }
 
-        DEBUG_PRINT("Compiler flags:");
+        LogUtils::Logger::debug("Compiler flags:");
         for (const auto& flag : compilerFlags) {
-            DEBUG_PRINT("  " << flag);
+            LogUtils::Logger::debug("  ", flag);
         }
 
         CXErrorCode error = m_astParser->parseFile(cmd.file, cFlags, functionsInfo);
         if (error != CXError_Success) {
-            std::cerr << "Failed to parse " << cmd.file << ". Error code: " << error << '\n';
+            LogUtils::Logger::error("Failed to parse ", cmd.file, ". Error code: ", error);
             continue;
         }
 
@@ -116,7 +115,7 @@ void CodeAnalyzer::processFunctions() {
 
         m_allFunctionsInfo.insert(m_allFunctionsInfo.end(), functionsInfo.begin(), functionsInfo.end());
     }
-    DEBUG_PRINT("Total number of functions found: " << m_allFunctionsInfo.size());
+    LogUtils::Logger::info("Total number of functions found: ", m_allFunctionsInfo.size());
     
     if (m_allFunctionsInfo.empty()) {
         throw std::runtime_error("No functions were found or parsed.");

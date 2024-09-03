@@ -1,10 +1,8 @@
-// ModelLoader.cpp
 #include "ModelLoader.h"
+#include "LogUtils.h"
 #include <iostream>
 #include <stdexcept>
 #include <cmath>
-
-#define DEBUG_PRINT(x) do { std::cout << "DEBUG: " << x << '\n'; } while (0)
 
 ModelLoader::ModelLoader() = default;
 
@@ -18,7 +16,7 @@ llama_model* ModelLoader::loadModel(const char* modelPath) {
         throw std::runtime_error("Failed to load model from " + std::string(modelPath));
     }
     
-    DEBUG_PRINT("Model loaded successfully from " << modelPath);
+    LogUtils::Logger::info("Model loaded successfully from {}", modelPath);
     return model;
 }
 
@@ -32,7 +30,7 @@ std::vector<llama_token> ModelLoader::tokenize(llama_model* model, const std::st
     }
     
     tokens.resize(nTokens);
-    DEBUG_PRINT("Tokenized input. Token count: " << nTokens);
+    LogUtils::Logger::debug("Tokenized input. Token count: {}", nTokens);
     return tokens;
 }
 
@@ -46,7 +44,7 @@ std::vector<float> ModelLoader::generateEmbeddings(llama_context* ctx, const std
     batchDecode(ctx, batch, output, 1, nEmbd);
 
     llama_batch_free(batch);
-    DEBUG_PRINT("Generated embeddings. Size: " << output.size());
+    LogUtils::Logger::debug("Generated embeddings. Size: {}", output.size());
     return output;
 }
 

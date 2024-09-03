@@ -1,108 +1,114 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0075 NEW)
-project(code_chunk)
-include(ExternalProject)
+project(code_chunk CXX)
 
 # Specify the C++ standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE Release)
 
-# Detect the target architecture
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
-    set(LLVM_TARGETS_TO_BUILD "X86")
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|AARCH64)$")
-    set(LLVM_TARGETS_TO_BUILD "AArch64")
+# Enable parallel compilation
+include(ProcessorCount)
+ProcessorCount(N)
+if(NOT N EQUAL 0)
+  set(CMAKE_BUILD_PARALLEL_LEVEL ${N})
+endif()
+
+# Use ccache if available
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+  set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+endif()
+
+# Enable unity build
+set(CMAKE_UNITY_BUILD ON)
+
+# Enable Link Time Optimization
+include(CheckIPOSupported)
+check_ipo_supported(RESULT supported OUTPUT error)
+if(supported)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 else()
-    message(FATAL_ERROR "Unsupported target architecture: ${CMAKE_SYSTEM_PROCESSOR}")
+  message(WARNING "IPO is not supported: ${error}")
 endif()
 
-# Find LLVM
-find_package(LLVM 17 REQUIRED CONFIG)
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+# Include other CMake files
+include(cmake/DetectArchitecture.cmake)
+include(cmake/FindDependencies.cmake)
+include(cmake/ConfigureLLAMACPP.cmake)
+include(cmake/ConfigureCMakeLib.cmake)
+include(cmake/ConfigureDoxygen.cmake)
+include(cmake/ClangTidy.cmake)
 
-# Find Clang
-find_package(Clang REQUIRED CONFIG)
-message(STATUS "Found Clang")
-
-# Include LLVM and Clang headers
-include_directories(${LLVM_INCLUDE_DIRS})
-include_directories(${CLANG_INCLUDE_DIRS})
-
-# Add LLVM and Clang definitions
-add_definitions(${LLVM_DEFINITIONS})
-add_compile_definitions(GGML_USE_HIPBLAS)
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(
-    -Wno-pointer-arithmetic
-    -Wno-sign-conversion
-    -Wno-narrowing
-    -Wno-implicit-int-float-conversion
-    -Wno-implicit-float-conversion
-    -Wno-bugprone-easily-swappable-parameters
-  )
+# Find LLVM using llvm-config
+find_program(LLVM_CONFIG llvm-config)
+if(NOT LLVM_CONFIG)
+  message(FATAL_ERROR "llvm-config not found!")
 endif()
 
-# Configure Doxygen
-set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
-set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-set(CMAKE_PROJECT_DIR ${CMAKE_SOURCE_DIR})
+execute_process(COMMAND ${LLVM_CONFIG} --cxxflags
+                OUTPUT_VARIABLE LLVM_CXXFLAGS
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND ${LLVM_CONFIG} --ldflags
+                OUTPUT_VARIABLE LLVM_LDFLAGS
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND ${LLVM_CONFIG} --libs all
+                OUTPUT_VARIABLE LLVM_LIBS
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND ${LLVM_CONFIG} --includedir
+                OUTPUT_VARIABLE LLVM_INCLUDE_DIR
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND ${LLVM_CONFIG} --libdir
+                OUTPUT_VARIABLE LLVM_LIB_DIR
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-# Configure the llama.cpp project as an external project
-set(LLAMA_CPP_SOURCE_DIR "${CMAKE_BINARY_DIR}/llama_cpp-src")
-set(LLAMA_CPP_BINARY_DIR "${CMAKE_BINARY_DIR}/llama_cpp-build")
+# Add LLVM flags to CMAKE_CXX_FLAGS
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}")
 
-ExternalProject_Add(llama_cpp
-    GIT_REPOSITORY https://github.com/ggerganov/llama.cpp.git
-    GIT_TAG master
-    SOURCE_DIR "${LLAMA_CPP_SOURCE_DIR}"
-    BINARY_DIR "${LLAMA_CPP_BINARY_DIR}"
-    CMAKE_ARGS
-        -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang
-        -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++
-        -DLLAMA_HIPBLAS=ON
-        -DAMDGPU_TARGETS=gfx1100
-        -DCMAKE_BUILD_TYPE=Release
-    BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release -j 50
-    INSTALL_COMMAND ""
-    TEST_COMMAND ""
-)
+# Add LLVM include directory
+include_directories(${LLVM_INCLUDE_DIR})
 
-# Remove any system-wide include directories
-include_directories(BEFORE
-    ${CMAKE_SOURCE_DIR}/src
+# Add LLVM library directory
+link_directories(${LLVM_LIB_DIR})
+
+# Optimize include directories
+set(INCLUDE_DIRS
+    ${LLVM_INCLUDE_DIR}
+    ${CLANG_INCLUDE_DIRS}
     ${LLAMA_CPP_SOURCE_DIR}
+    ${LLAMA_CPP_SOURCE_DIR}/common
+    ${LLAMA_CPP_SOURCE_DIR}/include
     ${LLAMA_CPP_SOURCE_DIR}/examples
     ${LLAMA_CPP_SOURCE_DIR}/ggml/include
     ${LLAMA_CPP_SOURCE_DIR}/ggml/src
     ${LLAMA_CPP_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_BINARY_DIR}/cmake_headers
+    ${CMAKE_LIB_SOURCE_DIR}/Source
+    ${CMAKE_LIB_BINARY_DIR}/Source
+    ${CMAKE_LIB_BINARY_DIR}/Utilities
+    ${CMAKE_LIB_SOURCE_DIR}/Utilities
+    ${CMAKE_LIB_SOURCE_DIR}/Utilities/std
+    ${CMAKE_LIB_SOURCE_DIR}/Utilities/cm3p
+    ${CMAKE_LIB_SOURCE_DIR}/Utilities/cm3p/values
+    ${CMAKE_LIB_SOURCE_DIR}/Utilities/cmlibuv/include
+    ${JSONCPP_INCLUDE_DIRS}
 )
+include_directories(BEFORE ${INCLUDE_DIRS})
 
-# Request to configure the file
-configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-message("Doxygen build started")
-
-# Optional: Add a custom target to run Doxygen when you build the project
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-    add_custom_target(doc_doxygen ALL
-        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMENT "Generating API documentation with Doxygen"
-        VERBATIM)
-else()
-    message("Doxygen needs to be installed to generate the doxygen documentation")
-endif()
-
-# Enable Clang-Tidy checks
-set(CLANG_TIDY_CHECKS "-*,clang-analyzer-*,performance-*")
-#set(CLANG_TIDY_CHECKS "-*,clang-analyzer-*,cppcoreguidelines-*,bugprone-*,performance-*")
-set(CMAKE_CXX_CLANG_TIDY 
-    clang-tidy;
-    -checks=${CLANG_TIDY_CHECKS};
-    -header-filter=${CMAKE_SOURCE_DIR}/src/.*;
+# Add compile definitions
+add_compile_definitions(
+    CURL_STATICLIB
+    LIBARCHIVE_STATIC
+    CMAKE_USE_SYSTEM_CURL=1
+    CMAKE_USE_SYSTEM_EXPAT=1
+    CMAKE_USE_SYSTEM_ZLIB=1
+    CMAKE_USE_SYSTEM_BZIP2=1
+    CMAKE_USE_SYSTEM_LIBLZMA=1
+    CMAKE_USE_SYSTEM_FORM=1
+    CMAKE_USE_SYSTEM_JSONCPP=1
+    CMAKE_USE_SYSTEM_LIBARCHIVE=1
+    CMAKE_BOOTSTRAP=0
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
@@ -110,50 +116,37 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 endif()
 
+# Define the main executable
 add_executable(code_chunk 
     src/main.cpp 
     src/ModelLoader.cpp 
     src/FunctionExtractor.cpp 
     src/FileUtil.cpp
+    src/CMakeParser.cpp
+    src/ASTUtils.cpp
+    src/ClangUtils.cpp
+    src/CodeAnalyzer.cpp
 )
 
-add_dependencies(code_chunk llama_cpp)
-
-# Explicitly set include directories for the target
-target_include_directories(code_chunk PRIVATE
-    ${CMAKE_SOURCE_DIR}/src
-    ${LLAMA_CPP_SOURCE_DIR}
-    ${LLAMA_CPP_SOURCE_DIR}/common
-    ${LLAMA_CPP_SOURCE_DIR}/include
-    ${LLAMA_CPP_SOURCE_DIR}/ggml/include
-    ${LLAMA_CPP_SOURCE_DIR}/examples
-    ${LLAMA_CPP_SOURCE_DIR}/ggml/src
-    ${LLAMA_CPP_SOURCE_DIR}/src
+# Precompiled headers
+set(PCH_HEADERS
+    ${CMAKE_SOURCE_DIR}/src/pch.h
 )
+target_precompile_headers(code_chunk PRIVATE ${PCH_HEADERS})
 
-# Specify the full path to the libraries
-set(COMMON_STATIC_LIB_PATH "${LLAMA_CPP_BINARY_DIR}/common/libcommon.a")
-set(LIBGGML_LIB_PATH "${LLAMA_CPP_BINARY_DIR}/ggml/src/libggml.so")
-set(LIBLLAMA_LIB_PATH "${LLAMA_CPP_BINARY_DIR}/src/libllama.so")
-#set(LIBLLAVA_LIB_PATH "${LLAMA_CPP_BINARY_DIR}/examples/libllava_shared.so")
+add_dependencies(code_chunk llama_cpp cmake_lib copy_cmake_headers build_cmake_libs)
 
+# Include JsonCpp headers
+include_directories(${JSONCPP_INCLUDE_DIRS})
 
-add_definitions(-DLLAMA_API=)
-add_definitions(-DGGML_API=)
-# Link against the built libraries first, then LLVM and Clang libraries
-target_link_libraries(code_chunk
-    PRIVATE
-    ${COMMON_STATIC_LIB_PATH}
-    ${LIBGGML_LIB_PATH}
-    ${LIBLLAMA_LIB_PATH}
-    clang-cpp
-    LLVM
-    LLVMSupport
-    ${LIBCLANG_LIBRARY}
-    ${CMAKE_THREAD_LIBS_INIT}
-    libclang
-)
+# Link libraries
+include(cmake/LinkLibraries.cmake)
 
+# Add compile options for JsonCpp
+target_compile_options(code_chunk PRIVATE ${JSONCPP_CFLAGS})
+
+# Link LLVM libraries
+target_link_libraries(code_chunk PRIVATE ${LLVM_LDFLAGS} ${LLVM_LIBS})
 
 # Add a custom command to run Doxygen after the build
 add_custom_command(TARGET code_chunk POST_BUILD
